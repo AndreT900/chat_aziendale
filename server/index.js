@@ -24,7 +24,27 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/chat_aziendale')
-    .then(() => console.log('MongoDB connesso'))
+    .then(async () => {
+        console.log('MongoDB connesso');
+
+        // Auto-create default Admin if database is empty
+        const User = require('./models/User');
+        try {
+            const adminExists = await User.findOne({ role: 'admin' });
+            if (!adminExists) {
+                console.log('⚡ Nessun admin trovato. Creazione utente Direzione iniziale...');
+                await User.create({
+                    username: 'Direzione',
+                    password: 'Direzione', // Sarà hashata automaticamente dal model
+                    role: 'admin',
+                    department: 'Direzione'
+                });
+                console.log('✅ Utente di default creato: Direzione / Direzione');
+            }
+        } catch (error) {
+            console.error('Errore controllo admin iniziale:', error);
+        }
+    })
     .catch(err => console.error('Errore connessione MongoDB:', err));
 
 // Middleware to make io available in routes

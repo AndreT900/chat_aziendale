@@ -253,9 +253,16 @@ const Dashboard = () => {
                         onConversationUpdate={handleConversationUpdate}
                     />
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                        <div className="text-6xl mb-4">💬</div>
-                        <p className="text-xl">Seleziona una conversazione per iniziare</p>
+                    <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                        <div className="text-8xl mb-6 bg-white p-6 rounded-full shadow-sm">💬</div>
+                        <h2 className="text-2xl font-bold text-gray-700 mb-2">Benvenuto in Chat Aziendale</h2>
+                        <p className="text-lg max-w-md">Seleziona una conversazione presente nella barra laterale o creane una nuova per iniziare a collaborare.</p>
+                        <button
+                            onClick={openNewChatModal}
+                            className="mt-8 bg-accent text-white px-6 py-3 rounded-full hover:bg-blue-600 transition shadow-md font-medium"
+                        >
+                            + Inizia una nuova chat
+                        </button>
                     </div>
                 )}
             </div>
