@@ -2,8 +2,6 @@
 
 Sistema di messaggistica in tempo reale progettato per la comunicazione interna aziendale tra team di produzione, responsabili e direzione.
 
-![Applicazione Funzionante](/Users/andrear/.gemini/antigravity/brain/62dc9f51-cdf5-49a9-8735-4d0448484ec0/.system_generated/click_feedback/click_feedback_1769191538191.png)
-
 ## ✨ Funzionalità Principali
 
 - ✅ **Chat Real-time** - Messaggistica istantanea con Socket.io
