@@ -33,18 +33,6 @@ cd client && npm install
 
 Il file `server/.env` è già configurato con MongoDB Atlas (per sviluppo).
 
-### 3. Popola Database
-
-```bash
-cd server
-node seed.js
-```
-
-Utenti creati (password: `password123`):
-- `team_a` - Team Produzione
-- `prod_resp` - Responsabile Produzione
-- `lab_resp` - Responsabile Laboratorio
-- `direzione` - Admin
 
 ### 4. Avvia App (Dev Mode)
 
@@ -226,7 +214,7 @@ chat_aziendale/
 │   ├── routes/           # API endpoints
 │   ├── middleware/       # Auth middleware
 │   ├── index.js          # Entry point
-│   ├── seed.js           # Database seeding
+
 │   └── createUser.js     # Helper creazione utenti
 │
 └── README.md             # Documentazione completa
