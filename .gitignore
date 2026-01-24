@@ -25,6 +25,3 @@ yarn-error.log*
 .vscode
 .idea
 
-# Documentation 
-DEPLOYMENT.md
-UPDATE_GUIDE.md
