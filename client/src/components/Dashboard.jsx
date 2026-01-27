@@ -20,6 +20,7 @@ const Dashboard = () => {
     const [articleCode, setArticleCode] = useState('');
     const [availableUsers, setAvailableUsers] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchConversations = async () => {
@@ -163,7 +164,16 @@ const Dashboard = () => {
         );
     };
 
-    const displayedConversations = showArchived ? archivedConversations : conversations;
+    // Filter conversations by search term (only for authorized roles)
+    const canSearch = ['admin', 'lab_manager', 'prod_manager'].includes(user?.role);
+
+    const baseConversations = showArchived ? archivedConversations : conversations;
+
+    const displayedConversations = canSearch && searchTerm.trim()
+        ? baseConversations.filter(chat =>
+            chat.title && chat.title.toUpperCase().includes(searchTerm.toUpperCase())
+        )
+        : baseConversations;
 
     return (
         <div className="flex h-screen overflow-hidden">
@@ -200,11 +210,43 @@ const Dashboard = () => {
                     </button>
                 </div>
 
+                {/* Search Field - Only for admin, lab_manager, prod_manager */}
+                {canSearch && (
+                    <div className="px-3 py-2 bg-slate-700 border-b border-slate-600">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="🔍 Cerca per codice articolo..."
+                                className="w-full px-3 py-2 pr-8 bg-slate-600 text-white placeholder-gray-400 rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent uppercase"
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                                    title="Cancella ricerca"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                        {searchTerm.trim() && (
+                            <p className="text-xs text-gray-400 mt-1">
+                                {displayedConversations.length} {displayedConversations.length === 1 ? 'risultato' : 'risultati'}
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
                     {loading ? <p className="text-center text-gray-400 p-4">Caricamento...</p> :
                         displayedConversations.length === 0 ?
                             <p className="text-center text-gray-400 p-4 text-sm">
-                                {showArchived ? 'Nessuna chat archiviata' : 'Nessuna chat attiva'}
+                                {searchTerm.trim()
+                                    ? `Nessuna chat trovata con il codice "${searchTerm}"`
+                                    : (showArchived ? 'Nessuna chat archiviata' : 'Nessuna chat attiva')
+                                }
                             </p> :
                             displayedConversations.map(chat => (
                                 <div
@@ -336,10 +378,10 @@ const Dashboard = () => {
                         <input
                             type="text"
                             value={articleCode}
-                            onChange={(e) => setArticleCode(e.target.value)}
+                            onChange={(e) => setArticleCode(e.target.value.toUpperCase())}
                             onKeyPress={(e) => e.key === 'Enter' && createChatWithArticleCode()}
-                            placeholder="Codice articolo"
-                            className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-accent"
+                            placeholder="ES: ART-12345"
+                            className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-accent uppercase"
                             autoFocus
                         />
 
