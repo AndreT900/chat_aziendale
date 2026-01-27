@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ChatRoom from './ChatRoom';
+import AIAssistant from './AIAssistant';
 import axios from 'axios';
 import io from 'socket.io-client';
 
@@ -21,6 +22,7 @@ const Dashboard = () => {
     const [availableUsers, setAvailableUsers] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showAIAssistant, setShowAIAssistant] = useState(false);
 
     useEffect(() => {
         const fetchConversations = async () => {
@@ -405,6 +407,23 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* AI Assistant Modal */}
+            {showAIAssistant && (
+                <AIAssistant onClose={() => setShowAIAssistant(false)} />
+            )}
+
+            {/* Floating AI Button - Only for admin */}
+            {user?.role === 'admin' && (
+                <button
+                    onClick={() => setShowAIAssistant(true)}
+                    className="fixed bottom-24 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 z-40 flex items-center gap-2 group"
+                    title="Apri AssistenteAI Assistant"
+                >
+                    <span className="text-2xl">✨</span>
+                    <span className="font-bold text-sm hidden group-hover:inline-block transition-all">AssistenteAI</span>
+                </button>
             )}
         </div>
     );

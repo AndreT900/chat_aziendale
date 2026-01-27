@@ -57,10 +57,12 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req, res) => {
     res.send('API Backend Chat Aziendale Running');
