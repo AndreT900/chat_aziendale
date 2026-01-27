@@ -16,6 +16,8 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [showArchived, setShowArchived] = useState(false);
     const [showNewChatModal, setShowNewChatModal] = useState(false);
+    const [showArticlePrompt, setShowArticlePrompt] = useState(false);
+    const [articleCode, setArticleCode] = useState('');
     const [availableUsers, setAvailableUsers] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
 
@@ -72,47 +74,9 @@ const Dashboard = () => {
     };
 
     const openNewChatModal = async () => {
-        // For team users, automatically create/open chat with prod_manager
+        // For team users, show article prompt first
         if (user.role === 'team') {
-            try {
-                // Get prod_manager
-                const { data: users } = await axios.get('http://localhost:5001/api/chat/users', {
-                    headers: { Authorization: `Bearer ${user.token}` }
-                });
-
-                if (users.length === 0) {
-                    alert('Nessun responsabile produzione disponibile');
-                    return;
-                }
-
-                const prodManager = users[0]; // There should be only one prod_manager
-
-                // Check if chat already exists
-                const existingChat = conversations.find(chat =>
-                    chat.type === 'direct' &&
-                    chat.participants.some(p => p._id === prodManager._id)
-                );
-
-                if (existingChat) {
-                    // Chat already exists, just select it
-                    setSelectedChat(existingChat);
-                    return;
-                }
-
-                // Create new chat with prod_manager
-                const { data } = await axios.post('http://localhost:5001/api/chat/conversations', {
-                    participants: [prodManager._id],
-                    type: 'direct'
-                }, {
-                    headers: { Authorization: `Bearer ${user.token}` }
-                });
-
-                setConversations(prev => [data, ...prev]);
-                setSelectedChat(data);
-            } catch (error) {
-                console.error("Errore creazione chat", error);
-                alert(error.response?.data?.message || 'Errore durante la creazione della chat');
-            }
+            setShowArticlePrompt(true);
             return;
         }
 
@@ -126,6 +90,44 @@ const Dashboard = () => {
         } catch (error) {
             console.error("Errore recupero utenti", error);
             alert('Errore nel caricamento degli utenti');
+        }
+    };
+
+    const createChatWithArticleCode = async () => {
+        if (!articleCode.trim()) {
+            alert('Inserisci il codice articolo');
+            return;
+        }
+
+        try {
+            // Get prod_manager
+            const { data: users } = await axios.get('http://localhost:5001/api/chat/users', {
+                headers: { Authorization: `Bearer ${user.token}` }
+            });
+
+            if (users.length === 0) {
+                alert('Nessun responsabile produzione disponibile');
+                return;
+            }
+
+            const prodManager = users[0];
+
+            // Create new chat with prod_manager and article code as title
+            const { data } = await axios.post('http://localhost:5001/api/chat/conversations', {
+                participants: [prodManager._id],
+                type: 'direct',
+                title: articleCode.trim()
+            }, {
+                headers: { Authorization: `Bearer ${user.token}` }
+            });
+
+            setConversations(prev => [data, ...prev]);
+            setSelectedChat(data);
+            setShowArticlePrompt(false);
+            setArticleCode('');
+        } catch (error) {
+            console.error("Errore creazione chat", error);
+            alert(error.response?.data?.message || 'Errore durante la creazione della chat');
         }
     };
 
@@ -212,7 +214,7 @@ const Dashboard = () => {
                                         }`}
                                 >
                                     <div className="font-semibold text-sm flex items-center justify-between">
-                                        <span>{chat.type === 'group' ? '👥 Gruppo' : '👤 Privata'}</span>
+                                        <span>{chat.title || (chat.type === 'group' ? '👥 Gruppo' : '👤 Privata')}</span>
                                         {chat.status === 'closure_requested' && (
                                             <span className="text-xs bg-orange-500 px-2 py-0.5 rounded">Chiusura richiesta</span>
                                         )}
@@ -314,6 +316,46 @@ const Dashboard = () => {
                             <button
                                 onClick={createNewChat}
                                 disabled={selectedUsers.length === 0}
+                                className="flex-1 py-2 bg-accent text-white rounded hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Crea Chat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Article Code Prompt Modal */}
+            {showArticlePrompt && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-96">
+                        <h2 className="text-xl font-bold mb-4">Quale articolo?</h2>
+
+                        <p className="text-sm text-gray-600 mb-3">Inserisci il codice interno dell'articolo:</p>
+
+                        <input
+                            type="text"
+                            value={articleCode}
+                            onChange={(e) => setArticleCode(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && createChatWithArticleCode()}
+                            placeholder="Codice articolo"
+                            className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-accent"
+                            autoFocus
+                        />
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setShowArticlePrompt(false);
+                                    setArticleCode('');
+                                }}
+                                className="flex-1 py-2 border border-gray-300 rounded hover:bg-gray-100 transition"
+                            >
+                                Annulla
+                            </button>
+                            <button
+                                onClick={createChatWithArticleCode}
+                                disabled={!articleCode.trim()}
                                 className="flex-1 py-2 bg-accent text-white rounded hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Crea Chat

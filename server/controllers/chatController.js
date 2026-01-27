@@ -5,7 +5,7 @@ const User = require('../models/User');
 // --- CONVERSATIONS ---
 
 exports.createConversation = async (req, res) => {
-    const { participants, type } = req.body;
+    const { participants, type, title } = req.body;
 
     if (!participants || participants.length === 0) {
         return res.status(400).json({ message: 'Seleziona almeno un partecipante' });
@@ -17,10 +17,17 @@ exports.createConversation = async (req, res) => {
     }
 
     try {
-        const conversation = await Conversation.create({
+        const conversationData = {
             participants,
             type
-        });
+        };
+
+        // Add title if provided
+        if (title) {
+            conversationData.title = title;
+        }
+
+        const conversation = await Conversation.create(conversationData);
 
         // Popola i dati degli utenti per il frontend
         const populatedConversation = await Conversation.findById(conversation._id)
