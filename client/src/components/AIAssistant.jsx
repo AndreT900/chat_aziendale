@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../config/socket';
+import { BRANDING } from '../config/branding';
 
 const AIAssistant = ({ onClose }) => {
     const { user } = useAuth();
@@ -25,7 +26,7 @@ const AIAssistant = ({ onClose }) => {
         // Welcome message
         setMessages([{
             role: 'assistant',
-            content: '👋 Ciao! Sono **AssistenteAI**, il tuo assistente intelligente per l\'analisi delle chat aziendali.\n\nPosso aiutarti a:\n- Analizzare problemi su articoli specifici\n- Generare report dettagliati\n- Identificare pattern ricorrenti\n- Fornire statistiche in tempo reale\n\nCosa vorresti sapere?',
+            content: BRANDING.aiAssistant.welcomeMessage,
             timestamp: new Date()
         }]);
     }, []);
@@ -100,9 +101,20 @@ const AIAssistant = ({ onClose }) => {
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="text-4xl">✨</div>
+                        {/* Custom Icon or Default Emoji */}
+                        <div className="h-10 w-10 flex items-center justify-center bg-white/20 rounded-full overflow-hidden">
+                            <img
+                                src={BRANDING.iconPath}
+                                alt="AI"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = '<span class="text-2xl">✨</span>';
+                                }}
+                            />
+                        </div>
                         <div>
-                            <h2 className="text-2xl font-bold">AssistenteAI Assistant</h2>
+                            <h2 className="text-2xl font-bold">{BRANDING.aiAssistant.name}</h2>
                             <p className="text-sm opacity-90">Powered by Groq Llama 3.3 70B</p>
                         </div>
                     </div>

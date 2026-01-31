@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { BRANDING } from '../config/branding';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -23,7 +24,17 @@ const Login = () => {
     return (
         <div className="min-h-screen bg-primary flex items-center justify-center">
             <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-                <h2 className="text-2xl font-bold text-center text-primary mb-6">Chat Aziendale</h2>
+                <div className="text-center mb-6">
+                    {/* Brand Logo */}
+                    <img
+                        src={BRANDING.logoPath}
+                        alt={BRANDING.companyName}
+                        className="h-16 mx-auto mb-4 object-contain"
+                        onError={(e) => { e.target.style.display = 'none'; }} // Hide if missing
+                    />
+                    <h2 className="text-2xl font-bold text-gray-800">{BRANDING.companyName}</h2>
+                    <p className="text-gray-500 text-sm mt-1">Portale Comunicazione</p>
+                </div>
                 {error && <div className="bg-red-100 text-red-600 p-2 rounded mb-4 text-sm">{error}</div>}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
