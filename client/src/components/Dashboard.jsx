@@ -5,7 +5,7 @@ import ChatRoom from './ChatRoom';
 import AIAssistant from './AIAssistant';
 import axios from 'axios';
 import { socket, API_URL } from '../config/socket';
-
+import { BRANDING } from '../config/branding';
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
@@ -213,12 +213,20 @@ const Dashboard = () => {
             {/* Sidebar */}
             <div className="w-80 bg-secondary text-white flex flex-col shadow-xl z-10">
                 <div className="p-4 font-bold text-xl border-b border-slate-600 bg-primary flex justify-between items-center">
-                    <span>Chat Aziendale</span>
+                    <div className="flex items-center gap-2 truncate">
+                        <img
+                            src={BRANDING.iconPath}
+                            alt="Logo"
+                            className="w-6 h-6 object-contain"
+                            onError={(e) => e.target.style.display = 'none'}
+                        />
+                        <span className="truncate">{BRANDING.companyName}</span>
+                    </div>
                     <button
                         onClick={openNewChatModal}
-                        className="bg-accent text-xs px-3 py-1 rounded hover:bg-blue-600"
+                        className="bg-accent text-xs px-3 py-1 rounded hover:bg-blue-600 shrink-0 ml-2"
                     >
-                        + Nuova Chat
+                        + Nuova
                     </button>
                 </div>
 
@@ -335,8 +343,18 @@ const Dashboard = () => {
                     />
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                        <div className="text-8xl mb-6 bg-white p-6 rounded-full shadow-sm">💬</div>
-                        <h2 className="text-2xl font-bold text-gray-700 mb-2">Benvenuto in Chat Aziendale</h2>
+                        <div className="w-24 h-24 mb-6 flex items-center justify-center bg-white rounded-full shadow-sm p-4">
+                            <img
+                                src={BRANDING.logoPath}
+                                alt="Logo Azienda"
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = '<span class="text-6xl">💬</span>';
+                                }}
+                            />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-700 mb-2">Benvenuto in {BRANDING.companyName}</h2>
                         <p className="text-lg max-w-md">Seleziona una conversazione presente nella barra laterale o creane una nuova per iniziare a collaborare.</p>
                         <button
                             onClick={openNewChatModal}
@@ -454,10 +472,10 @@ const Dashboard = () => {
                 <button
                     onClick={() => setShowAIAssistant(true)}
                     className="fixed bottom-24 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 z-40 flex items-center gap-2 group"
-                    title="Apri AssistenteAI Assistant"
+                    title={`Apri ${BRANDING.aiAssistant.name}`}
                 >
                     <span className="text-2xl">✨</span>
-                    <span className="font-bold text-sm hidden group-hover:inline-block transition-all">AssistenteAI</span>
+                    <span className="font-bold text-sm hidden group-hover:inline-block transition-all">{BRANDING.aiAssistant.name}</span>
                 </button>
             )}
         </div>
@@ -465,4 +483,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

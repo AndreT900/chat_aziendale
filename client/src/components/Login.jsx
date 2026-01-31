@@ -29,7 +29,7 @@ const Login = () => {
                     <img
                         src={BRANDING.logoPath}
                         alt={BRANDING.companyName}
-                        className="h-16 mx-auto mb-4 object-contain"
+                        className="h-48 w-auto mx-auto mb-8 object-contain"
                         onError={(e) => { e.target.style.display = 'none'; }} // Hide if missing
                     />
                     <h2 className="text-2xl font-bold text-gray-800">{BRANDING.companyName}</h2>
