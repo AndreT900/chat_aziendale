@@ -1,25 +1,43 @@
-# 💬 Chat Aziendale - Sistema di Messaggistica Interna
+# 💬 Corporate Chat - Internal Messaging System
 
-Sistema di messaggistica in tempo reale progettato per la comunicazione interna aziendale tra team di produzione, responsabili e direzione.
+A real-time messaging system designed for internal corporate communication between production teams, managers, and directors.
 
-## ✨ Funzionalità Principali
+## ✨ Main Features
 
-- ✅ **Chat Real-time** - Messaggistica istantanea con Socket.io
-- ✅ **Gestione Ruoli** - Team, Responsabile Produzione, Responsabile Laboratorio, Admin
-- ✅ **Escalation Chat** - Trasforma chat 1-to-1 in gruppi con un click
-- ✅ **Messaggi Flash** - Messaggi speciali con archiviazione automatica
-- ✅ **Chiusura Condivisa** - Sistema di approvazione multipla per chiudere chat
-- ✅ **Storico Archiviato** - Visualizza tutte le chat chiuse
-- ✅ **PWA Ready** - Installabile come app desktop
-- ✅ **MongoDB Atlas** - Database cloud con backup automatici
+- ✅ **Real-time Chat** - Instant messaging powered by Socket.io.
+- ✅ **Role-Based Access** - Team, Production Manager, Lab Manager, Admin.
+- ✅ **Chat Escalation** - Transform 1-to-1 chats into group discussions with one click.
+- ✅ **Flash Messages** - Urgent messages (prod_manager only) requiring read confirmation, auto-archives chat.
+- ✅ **Shared Closure** - Multi-approval system to officially close discussions.
+- ✅ **Archived History** - Full access to past and closed conversations.
+- ✅ **PWA Ready** - Installable as a desktop app for all employees.
+- ✅ **AI Assistant** - Integrated AI for data analysis and reports (Groq/OpenAI).
 
-## 🚀 Quick Start (Sviluppo Locale)
+## 💾 MongoDB Configuration (Cloud vs Local)
 
-### Prerequisiti
+This application supports two data management modes:
+
+### Option A: MongoDB Atlas (Cloud)
+Best for quick start and low maintenance. Data is hosted on MongoDB servers.
+- **URI**: `mongodb+srv://<user>:<password>@cluster.xyz.mongodb.net/chat_aziendale`
+
+### Option B: MongoDB Community Server (Local) - ✅ Recommended for Enterprise
+Best for maximum privacy and control. Data never leaves the corporate network.
+1. Download and install **MongoDB Community Server** on your corporate server.
+2. Ensure the service is running on the default port `27017`.
+3. In the `.env` file, use the local connection string:
+   - **URI**: `mongodb://127.0.0.1:27017/chat_aziendale`
+4. IT can manage backups locally using `mongodump` without additional storage costs.
+
+---
+
+## 🚀 Quick Start (Local Development)
+
+### Prerequisites
 - Node.js 18+
-- MongoDB Atlas account (già configurato)
+- MongoDB (Atlas or Local)
 
-### 1. Installa Dipendenze
+### 1. Install Dependencies
 
 ```bash
 # Server
@@ -29,12 +47,26 @@ cd server && npm install
 cd client && npm install
 ```
 
-### 2. Configura Variabili d'Ambiente
+### 2. Configure Environment Variables
 
-Il file `server/.env` è già configurato con MongoDB Atlas (per sviluppo).
+Create a `.env` file in the `server` directory:
 
+```env
+PORT=5001
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_secret_key
+GROQ_API_KEY=your_groq_key
+AI_PROVIDER=groq
+CORS_ORIGIN=*  # Use specific origin in production (e.g., http://192.168.1.100:5001)
+```
 
-### 4. Avvia App (Dev Mode)
+Optionally, create a `.env` file in the `client` directory for production:
+
+```env
+VITE_API_URL=http://your-server-ip:5001
+```
+
+### 3. Start App (Dev Mode)
 
 **Terminal 1 - Backend:**
 ```bash
@@ -48,233 +80,80 @@ cd client
 npm run dev
 ```
 
-Apri browser: `http://localhost:5173`
+Open browser: `http://localhost:5173`
 
 ---
 
-## 📦 Deployment in Produzione (Guida Completa)
+## 📦 Production Deployment (On-Premise)
 
-Questa sezione spiega come installare l'applicazione sul Server Aziendale partendo da zero (Clean Install).
+This section explains how to install the application on the corporate server from scratch.
 
-### Prerequisiti sul Server Aziendale 🖥️
+### Prerequisites on Corporate Server 🖥️
+1. **Node.js 18+**.
+2. **Git** (recommended).
+3. **Internal Static IP** (e.g., 192.168.1.100).
 
-1.  **Node.js** (versione 18 o superiore) installato.
-2.  **Git** installato (consigliato).
-3.  **Accesso a Internet** (per scaricare le librerie `npm`).
-4.  **IP Statico** per il server (es. 192.168.1.100).
-
-### Passo 1: Scaricare il Progetto sul Server
-
-#### Metodo A: Tramite Git (Consigliato ✅)
-Apri il terminale sul server (nella cartella dove vuoi installare, es. `C:\` o `/opt/`) ed esegui:
-
+### Step 1: Clone the Project
 ```bash
 git clone https://github.com/AndreT900/chat_aziendale.git
 cd chat_aziendale
 ```
 
-#### Metodo B: Copia Manuale
-Se non puoi usare Git sul server:
-1.  Sul tuo Mac, copia l'intera cartella del progetto.
-2.  ⚠️ **IMPORTANTE**: ELIMINA la cartella `node_modules` (sia in `client` che in `server`) prima di copiare.
-3.  Trasferisci la cartella pulita sul server.
-
-### Passo 2: Installazione e Build (SUL SERVER)
-
-Una volta che hai la cartella sul server, devi installare le dipendenze e costruire l'interfaccia.
-
-#### 1. Backend (Server)
-Installa le librerie necessarie per il server:
-
+### Step 2: Build and Install
 ```bash
+# Backend
 cd server
 npm install
-```
 
-#### 2. Frontend (Client)
-Installa le librerie per l'interfaccia e crea la versione ottimizzata ("build"):
-
-```bash
+# Frontend Build
 cd ../client
 npm install
 npm run build
 ```
 
-*Nota: Questo comando creerà una cartella `dist` all'interno di `client`. È la versione pronta per l'uso.*
-
-### Passo 3: Configurazione Server
-
-1.  Torna nella cartella `server`:
-    ```bash
-    cd ../server
-    ```
-2.  Crea o modifica il file `.env` con le tue impostazioni di produzione:
-    ```env
-    PORT=5001
-    MONGO_URI=mongodb+srv://utente:password@cluster.mongodb.net/chat_aziendale
-    JWT_SECRET=CAMBIA_QUESTA_CON_UNA_PASSWORD_LUNGA_E_SICURA
-    NODE_ENV=production
-    ```
-
-### Passo 4: Avvio con PM2 (Process Manager)
-
-Per tenere l'app sempre accesa (anche se il server si riavvia), useremo PM2.
-
-1.  Installa PM2 globalmente (se non c'è già):
-    ```bash
-    npm install -g pm2
-    ```
-
-2.  Avvia l'applicazione:
-    ```bash
-    pm2 start index.js --name "chat-aziendale"
-    ```
-
-3.  Salva la configurazione per il riavvio automatico:
-    ```bash
-    pm2 save
-    pm2 startup
-    ```
-
-### Passo 5: Firewall e Accesso
-
-Assicurati che il firewall del server consenta il traffico in entrata sulla porta **5001**.
-Gli utenti potranno accedere alla chat digitando nel browser: `http://INDIRIZZO_IP_SERVER:5001`
-
-### � Come Aggiornare in Futuro
-
-Quando carichi nuove modifiche su GitHub, per aggiornare il server aziendale:
-
+### Step 3: Start with PM2 (Process Manager)
 ```bash
-# Entra nella cartella
-cd /percorso/chat_aziendale
-
-# 1. Scarica le novità
-git pull
-
-# 2. Aggiorna Frontend (se necessario)
-cd client
-npm install       # Solo se hai aggiunto nuove librerie
-npm run build     # SEMPRE necessario se hai modificato l'interfaccia
-
-# 3. Aggiorna Backend e Riavvia
+npm install -g pm2
 cd ../server
-npm install       # Solo se hai aggiunto nuove librerie
-pm2 restart chat-aziendale
+pm2 start index.js --name "chat-aziendale"
+pm2 save
+pm2 startup
 ```
 
 ---
 
-## 🖼️ Icona Desktop (PWA)
-
-L'app può essere installata come applicazione desktop nativa dai browser Chrome/Edge.
-Vedi [ICONA_DESKTOP.md](./ICONA_DESKTOP.md) per i dettagli su come generare le icone.
-
----
-
-## 👥 Gestione Utenti
-
-### Creare Nuovo Utente
+## � User Management
 
 ```bash
 cd server
 node createUser.js <username> <password> [role] [department]
 ```
 
-**Esempi:**
-```bash
-node createUser.js mario password123 team "Produzione A"
-node createUser.js laura password123 prod_manager
-node createUser.js admin admin123 admin
-```
-
-**Ruoli disponibili:**
-- `team` - Membro del team (default)
-- `prod_manager` - Responsabile Produzione
-- `lab_manager` - Responsabile Laboratorio
-- `admin` - Direzione/Amministratore
+**Roles:** `team`, `prod_manager`, `lab_manager`, `admin`.
 
 ---
 
-## 📂 Struttura Progetto
+## 📂 Project Structure
 
 ```
 chat_aziendale/
 ├── client/               # Frontend React
 │   ├── src/
-│   │   ├── components/   # Componenti UI
-│   │   ├── context/      # Context API (Auth)
-│   │   └── main.jsx
-│   ├── public/           # File statici + icone PWA
-│   └── dist/             # Build di produzione
-│
+│   │   ├── components/   # UI Components
+│   │   ├── context/      # Auth Context
+│   └── dist/             # Production Build
 ├── server/               # Backend Node.js
-│   ├── controllers/      # Logica business
-│   ├── models/           # Schema MongoDB
-│   ├── routes/           # API endpoints
-│   ├── middleware/       # Auth middleware
-│   ├── index.js          # Entry point
-
-│   └── createUser.js     # Helper creazione utenti
-│
-└── README.md             # Documentazione completa
+│   ├── controllers/      # Business Logic
+│   ├── models/           # MongoDB Schemas
+│   ├── routes/           # API Endpoints
+│   └── index.js          # Entry point
 ```
 
----
-
-## 🔧 Stack Tecnologico
-
-**Frontend:** React 18, Vite, TailwindCSS, Socket.io Client, Axios
-**Backend:** Node.js, Express.js, Socket.io, MongoDB (Mongoose), JWT, Bcryptjs
-
----
-
-## 🌐 API Endpoints
-
-### Autenticazione
-- `POST /api/auth/login`
-- `POST /api/auth/register`
-
-### Chat
-- `GET /api/chat/conversations`
-- `POST /api/chat/conversations` (+ escalate, request-close, approve-close)
-
-### Messaggi
-- `GET /api/chat/messages/:conversationId`
-- `POST /api/chat/messages`
+## �️ Security
+- ✅ Password hashing with Bcrypt.
+- ✅ JWT Authentication.
+- ✅ Middleware route protection.
+- ✅ AI Guardrails (Analyses only database data).
 
 ---
-
-## 🔒 Sicurezza
-- ✅ Password hashate con bcrypt
-- ✅ Autenticazione JWT
-- ✅ Middleware protezione routes
-- ✅ Validazione input
-
-**In produzione:** Ricorda di usare un `JWT_SECRET` sicuro e abilitare HTTPS se possibile.
-
----
-
-## 📊 Monitoraggio e Troubleshooting
-
-```bash
-# Status e Logs
-pm2 status
-pm2 logs chat-aziendale
-
-# Comandi
-pm2 restart chat-aziendale
-pm2 stop chat-aziendale
-```
-
-**Problemi Comuni:**
-- **Errore connessione MongoDB**: Verifica credenziali in `.env`
-- **Frontend non si carica**: Assicurati che `npm run build` sia completato senza errori
-- **Messaggi non real-time**: Verifica che la porta Socket.io non sia bloccata dal firewall
-
----
-
-## 📝 License
-Proprietario - Solo uso aziendale interno
-
-**Ultimo Aggiornamento:** 24 Gennaio 2026
+*Last Update: January 31, 2026*

@@ -10,7 +10,8 @@ const {
     requestClosureConversation,
     approveClosureConversation,
     sendMessage,
-    getMessages
+    getMessages,
+    acknowledgeFlash
 } = require('../controllers/chatController');
 
 router.use(protect); // Proteggi tutte le rotte
@@ -26,5 +27,6 @@ router.get('/users', getAllUsers);
 
 router.post('/messages', sendMessage);
 router.get('/messages/:conversationId', getMessages);
+router.post('/messages/acknowledge-flash', acknowledgeFlash);
 
 module.exports = router;

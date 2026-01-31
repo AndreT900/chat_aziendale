@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import ChatRoom from './ChatRoom';
 import AIAssistant from './AIAssistant';
 import axios from 'axios';
-import io from 'socket.io-client';
+import { socket, API_URL } from '../config/socket';
 
-const socket = io('http://localhost:5001');
 
 const Dashboard = () => {
     const { user, logout } = useAuth();
@@ -27,11 +26,16 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchConversations = async () => {
             try {
-                const { data } = await axios.get('http://localhost:5001/api/chat/conversations', {
+                const { data } = await axios.get(`${API_URL}/api/chat/conversations`, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 setConversations(data);
                 setLoading(false);
+
+                // Join all conversation rooms to receive flash events
+                data.forEach(conv => {
+                    socket.emit('join_chat', conv._id);
+                });
             } catch (error) {
                 console.error("Errore recupero chat", error);
                 setLoading(false);
@@ -40,7 +44,7 @@ const Dashboard = () => {
 
         const fetchArchivedConversations = async () => {
             try {
-                const { data } = await axios.get('http://localhost:5001/api/chat/conversations/archived', {
+                const { data } = await axios.get(`${API_URL}/api/chat/conversations/archived`, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 setArchivedConversations(data);
@@ -60,10 +64,31 @@ const Dashboard = () => {
             setSelectedChat(data.conversation);
         };
 
+        // Listen for flash message sent - update sidebar
+        const handleFlashSent = (data) => {
+            if (data.conversation) {
+                setConversations(prev =>
+                    prev.map(c => c._id === data.conversation._id ? data.conversation : c)
+                );
+            }
+        };
+
+        // Listen for flash acknowledged - move to archived
+        const handleFlashAcknowledged = (data) => {
+            if (data.conversation) {
+                setConversations(prev => prev.filter(c => c._id !== data.conversation._id));
+                setArchivedConversations(prev => [data.conversation, ...prev]);
+            }
+        };
+
         socket.on('new_group_created', handleNewGroup);
+        socket.on('flash_sent', handleFlashSent);
+        socket.on('flash_acknowledged', handleFlashAcknowledged);
 
         return () => {
             socket.off('new_group_created', handleNewGroup);
+            socket.off('flash_sent', handleFlashSent);
+            socket.off('flash_acknowledged', handleFlashAcknowledged);
         };
     }, [user]);
 
@@ -76,6 +101,12 @@ const Dashboard = () => {
         setConversations(prev => prev.map(c => c._id === updatedConv._id ? updatedConv : c));
     };
 
+    const handleConversationArchived = (archivedConv) => {
+        setConversations(prev => prev.filter(c => c._id !== archivedConv._id));
+        setArchivedConversations(prev => [archivedConv, ...prev]);
+        setSelectedChat(null);
+    };
+
     const openNewChatModal = async () => {
         // For team users, show article prompt first
         if (user.role === 'team') {
@@ -85,7 +116,7 @@ const Dashboard = () => {
 
         // For other users, show the modal
         try {
-            const { data } = await axios.get('http://localhost:5001/api/chat/users', {
+            const { data } = await axios.get(`${API_URL}/api/chat/users`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
             setAvailableUsers(data);
@@ -104,7 +135,7 @@ const Dashboard = () => {
 
         try {
             // Get prod_manager
-            const { data: users } = await axios.get('http://localhost:5001/api/chat/users', {
+            const { data: users } = await axios.get(`${API_URL}/api/chat/users`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
 
@@ -116,7 +147,7 @@ const Dashboard = () => {
             const prodManager = users[0];
 
             // Create new chat with prod_manager and article code as title
-            const { data } = await axios.post('http://localhost:5001/api/chat/conversations', {
+            const { data } = await axios.post(`${API_URL}/api/chat/conversations`, {
                 participants: [prodManager._id],
                 type: 'direct',
                 title: articleCode.trim()
@@ -141,7 +172,7 @@ const Dashboard = () => {
         }
 
         try {
-            const { data } = await axios.post('http://localhost:5001/api/chat/conversations', {
+            const { data } = await axios.post(`${API_URL}/api/chat/conversations`, {
                 participants: selectedUsers,
                 type: selectedUsers.length > 1 ? 'group' : 'direct'
             }, {
@@ -255,10 +286,13 @@ const Dashboard = () => {
                                     key={chat._id}
                                     onClick={() => setSelectedChat(chat)}
                                     className={`p-3 rounded cursor-pointer transition-colors border-b border-slate-600/50 ${selectedChat?._id === chat._id ? 'bg-accent text-white' : 'hover:bg-slate-600 text-gray-300'
-                                        }`}
+                                        } ${chat.hasActiveFlash ? 'border-l-4 border-l-yellow-400' : ''}`}
                                 >
                                     <div className="font-semibold text-sm flex items-center justify-between">
-                                        <span>{chat.title || (chat.type === 'group' ? '👥 Gruppo' : '👤 Privata')}</span>
+                                        <span className="flex items-center gap-1">
+                                            {chat.hasActiveFlash && <span title="Flash Message Attivo">⚡</span>}
+                                            {chat.title || (chat.type === 'group' ? '👥 Gruppo' : '👤 Privata')}
+                                        </span>
                                         {chat.status === 'closure_requested' && (
                                             <span className="text-xs bg-orange-500 px-2 py-0.5 rounded">Chiusura richiesta</span>
                                         )}
@@ -297,6 +331,7 @@ const Dashboard = () => {
                         key={selectedChat._id}
                         onNewGroupCreated={handleNewGroupCreated}
                         onConversationUpdate={handleConversationUpdate}
+                        onConversationArchived={handleConversationArchived}
                     />
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">

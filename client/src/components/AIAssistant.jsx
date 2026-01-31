@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { API_URL } from '../config/socket';
 
 const AIAssistant = ({ onClose }) => {
     const { user } = useAuth();
@@ -39,7 +40,7 @@ const AIAssistant = ({ onClose }) => {
 
     const fetchStats = async () => {
         try {
-            const { data } = await axios.get('http://localhost:5001/api/ai/stats', {
+            const { data } = await axios.get(`${API_URL}/api/ai/stats`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
             setStats(data);
@@ -63,7 +64,7 @@ const AIAssistant = ({ onClose }) => {
         setLoading(true);
 
         try {
-            const { data } = await axios.post('http://localhost:5001/api/ai/query',
+            const { data } = await axios.post(`${API_URL}/api/ai/query`,
                 { query },
                 { headers: { Authorization: `Bearer ${user.token}` } }
             );

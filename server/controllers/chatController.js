@@ -56,6 +56,7 @@ exports.getUserConversations = async (req, res) => {
 
         const conversations = await Conversation.find(query)
             .populate('participants', 'username role department')
+            .populate('flashSentBy', 'username')
             .sort({ updatedAt: -1 });
 
         res.json(conversations);
@@ -82,6 +83,7 @@ exports.getArchivedConversations = async (req, res) => {
 
         const conversations = await Conversation.find(query)
             .populate('participants', 'username role department')
+            .populate('flashSentBy', 'username')
             .sort({ archivedAt: -1 });
 
         res.json(conversations);
@@ -237,7 +239,8 @@ exports.escalateToGroup = async (req, res) => {
 
         const groupConversation = await Conversation.create({
             participants: uniqueParticipants,
-            type: 'group'
+            type: 'group',
+            title: originalConv.title // Inherit title (article code) from original conversation
         });
 
         // Copy the original message to the new group conversation
@@ -277,6 +280,27 @@ exports.sendMessage = async (req, res) => {
     const { conversationId, content, isFlash } = req.body;
 
     try {
+        // Check if conversation has active flash (only flash sender can still send)
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: 'Conversazione non trovata' });
+        }
+
+        // Block messages if there's an active flash (except for the flash sender)
+        if (conversation.hasActiveFlash &&
+            conversation.flashSentBy?.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                message: 'Chat bloccata. In attesa di conferma lettura del Flash Message.'
+            });
+        }
+
+        // Only prod_manager can send flash messages
+        if (isFlash && req.user.role !== 'prod_manager') {
+            return res.status(403).json({
+                message: 'Solo il Responsabile Produzione può inviare Flash Message.'
+            });
+        }
+
         const message = await Message.create({
             conversationId,
             sender: req.user._id,
@@ -284,14 +308,35 @@ exports.sendMessage = async (req, res) => {
             isFlash: isFlash || false
         });
 
-        // Aggiorna data ultima modifica conversazione
-        await Conversation.findByIdAndUpdate(conversationId, { updatedAt: new Date() });
+        // If flash message, lock the conversation
+        if (isFlash) {
+            await Conversation.findByIdAndUpdate(conversationId, {
+                hasActiveFlash: true,
+                flashSentBy: req.user._id,
+                updatedAt: new Date()
+            });
+        } else {
+            await Conversation.findByIdAndUpdate(conversationId, { updatedAt: new Date() });
+        }
 
         const populatedMessage = await Message.findById(message._id)
             .populate('sender', 'username role');
 
         // Emit real-time event
         req.io.to(conversationId).emit('message_received', populatedMessage);
+
+        // If flash, also emit flash_sent event with updated conversation
+        if (isFlash) {
+            const updatedConversation = await Conversation.findById(conversationId)
+                .populate('participants', 'username role department')
+                .populate('flashSentBy', 'username');
+
+            req.io.to(conversationId).emit('flash_sent', {
+                conversationId,
+                sender: req.user.username,
+                conversation: updatedConversation
+            });
+        }
 
         res.status(201).json(populatedMessage);
     } catch (error) {
@@ -312,5 +357,62 @@ exports.getMessages = async (req, res) => {
         res.json(messages);
     } catch (error) {
         res.status(500).json({ message: 'Errore recupero messaggi', error: error.message });
+    }
+};
+
+// Acknowledge flash message - archives conversation automatically
+exports.acknowledgeFlash = async (req, res) => {
+    const { conversationId } = req.body;
+
+    try {
+        const conversation = await Conversation.findById(conversationId).populate('participants');
+
+        if (!conversation) {
+            return res.status(404).json({ message: 'Conversazione non trovata' });
+        }
+
+        // Check if there's an active flash
+        if (!conversation.hasActiveFlash) {
+            return res.status(400).json({ message: 'Nessun Flash Message attivo in questa chat.' });
+        }
+
+        // Only non-sender participants can acknowledge
+        if (conversation.flashSentBy?.toString() === req.user._id.toString()) {
+            return res.status(403).json({
+                message: 'Chi ha inviato il Flash Message non può confermarne la lettura.'
+            });
+        }
+
+        // Check if user is participant
+        const isParticipant = conversation.participants.some(
+            p => p._id.toString() === req.user._id.toString()
+        );
+        if (!isParticipant) {
+            return res.status(403).json({ message: 'Non sei un partecipante di questa chat.' });
+        }
+
+        // Archive the conversation
+        conversation.hasActiveFlash = false;
+        conversation.flashSentBy = null;
+        conversation.status = 'closed';
+        conversation.archivedAt = new Date();
+        await conversation.save();
+
+        const updatedConv = await Conversation.findById(conversationId)
+            .populate('participants', 'username role department');
+
+        // Notify all participants via socket
+        req.io.to(conversationId).emit('flash_acknowledged', {
+            conversation: updatedConv,
+            acknowledgedBy: req.user.username
+        });
+
+        res.json({
+            message: 'Flash Message confermato. Chat archiviata.',
+            conversation: updatedConv
+        });
+    } catch (error) {
+        console.error('Errore conferma flash:', error);
+        res.status(500).json({ message: 'Errore conferma flash', error: error.message });
     }
 };

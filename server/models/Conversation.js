@@ -7,7 +7,11 @@ const conversationSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'closure_requested', 'closed'], default: 'active' },
     archivedAt: { type: Date },
 
-    // Campi per la logica di chiusura
+    // Flash message fields
+    hasActiveFlash: { type: Boolean, default: false }, // True when flash message is pending acknowledgment
+    flashSentBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Who sent the flash
+
+    // Closure logic fields
     closureRequestInitiator: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     closureApprovals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });

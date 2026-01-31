@@ -8,9 +8,12 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+// CORS configuration: use CORS_ORIGIN env var in production
+const corsOrigin = process.env.CORS_ORIGIN || "*";
+
 const io = new Server(server, {
     cors: {
-        origin: "*", // In produzione accetta da qualsiasi origine
+        origin: corsOrigin,
         methods: ["GET", "POST"]
     }
 });

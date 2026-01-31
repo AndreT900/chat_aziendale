@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../config/socket';
 
 const AdminPanel = () => {
     const { user, logout } = useAuth();
@@ -27,7 +28,7 @@ const AdminPanel = () => {
 
     const fetchUsers = async () => {
         try {
-            const { data } = await axios.get('http://localhost:5001/api/admin/users', {
+            const { data } = await axios.get(`${API_URL}/api/admin/users`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
             setUsers(data);
@@ -42,7 +43,7 @@ const AdminPanel = () => {
     const handleCreateUser = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5001/api/admin/users', newUser, {
+            await axios.post(`${API_URL}/api/admin/users`, newUser, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
             alert('✅ Utente creato con successo!');
@@ -60,7 +61,7 @@ const AdminPanel = () => {
         }
 
         try {
-            await axios.delete(`http://localhost:5001/api/admin/users/${userId}`, {
+            await axios.delete(`${API_URL}/api/admin/users/${userId}`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
             alert('✅ Utente eliminato con successo');
@@ -74,7 +75,7 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             await axios.put(
-                `http://localhost:5001/api/admin/users/${selectedUser._id}/password`,
+                `${API_URL}/api/admin/users/${selectedUser._id}/password`,
                 { newPassword },
                 { headers: { Authorization: `Bearer ${user.token}` } }
             );
